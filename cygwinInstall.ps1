@@ -15,4 +15,4 @@ if (-not (Test-Path $setup_path)) {
 
 # Run setup
 $packs = [string]::join(" -P ", $packages.split(" "))
-"$setup_path -s $mirror -L $download -l $download -R $target_path -q -P $packs" | iex
+"$setup_path -A -N -s $mirror -l $download -R $target_path -q -P $packs" | iex
