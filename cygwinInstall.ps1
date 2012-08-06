@@ -3,7 +3,7 @@ $mirror      = "http://box-soft.com/"
 $download    = Join-Path $home "Downloads\Cygwin"
 $setup_path  = Join-Path $download "setup.exe"
 $target_path = "C:\cygwin"
-$packages    = "curl openssh wget"
+$packages    = "cygwin coreutils curl openssh wget"
 
 # Download setup
 if (-not (Test-Path $setup_path)) {
