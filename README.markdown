@@ -1,6 +1,8 @@
 # Use #
 
+```
   $options = "open_bash=true&sshd=true"; powershell -NoProfile -ExecutionPolicy unrestricted -Command "(new-object net.webClient).DownloadString('http://bit.ly/psCygwinInstall?$options') | iex"
+```
 
 # Options #
 
