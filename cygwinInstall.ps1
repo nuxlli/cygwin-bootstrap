@@ -5,8 +5,12 @@ Add-Type -AssemblyName System.Web
 $short_url = [regex]::Replace($myInvocation.MyCommand.Definition, ".*(http://.*)'\).*", '$1')
 $params    = [System.Web.HttpUtility]::ParseQueryString((New-Object System.URI $short_url).Query)
 
+# Fixing to support bash and powershell
+if ($env:home -eq $null) { $env:home = $home } 
+if ($env:USERNAME -eq $null) { $env:USERNAME = $env:USER }
+
 # Paths
-$download   = Join-Path $home "Downloads\Cygwin"
+$download   = Join-Path $env:home "Downloads\Cygwin"
 $setup_path = Join-Path $download "setup.exe"
 $options    = @{
   "mirror"      = "http://mirror.cs.vt.edu/pub/cygwin/cygwin"
@@ -59,7 +63,7 @@ if (-not (check('uninstall'))) {
   # Packs
   dependence_for 'sshd' 'curl openssh'
   dependence_for 'apt-cyg' 'wget'
-  $packs = [string]::join(" -P ", "cygwin coreutils $($options['packages'])".split(" "))
+  $packs = [string]::join(" -P ", "cygwin coreutils $($options['packages'])".trim().split(" "))
 
   "Install cygwin and packages: $($options['packages'])"
   "$setup_cmd -P $packs | out-null" | iex
