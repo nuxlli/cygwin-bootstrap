@@ -17,9 +17,9 @@ $options    = @{
   "uninstall"   = "false";
   "target_path" = "C:\cygwin";
   "packages"    = "";
-  "sshd"        = "true";
-  "apt-cyg"     = "false";
   "open_bash"   = "false";
+  "with-sshd"   = "22";
+  "with-apt-cyg"= "false";
 }
 
 foreach($key in $params.AllKeys) {
@@ -28,7 +28,7 @@ foreach($key in $params.AllKeys) {
 
 # Utils
 function check($option) {
-  $options[$option] -eq "true"
+  $options[$option] -ne "false"
 }
 
 function dependence_for($mod, $dependences) {
@@ -61,8 +61,8 @@ if (-not (check('uninstall'))) {
   $setup_cmd = "$setup_path $([string]::join(" ", $setup_opt))"
   
   # Packs
-  dependence_for 'sshd' 'curl openssh'
-  dependence_for 'apt-cyg' 'wget'
+  dependence_for 'with-sshd' 'curl openssh'
+  dependence_for 'with-apt-cyg' 'wget'
   $packs = [string]::join(" -P ", "cygwin coreutils $($options['packages'])".trim().split(" "))
 
   "Install cygwin and packages: $($options['packages'])"
@@ -70,15 +70,15 @@ if (-not (check('uninstall'))) {
   
   if (Test-Path $bash_path) {
     # Configure sshd
-    if (check('sshd')) {
+    if (check('with-sshd')) {
       $self_url    = [System.Net.HttpWebRequest]::Create($short_url).GetResponse().ResponseUri.AbsoluteUri
       $root_url    = [regex]::Replace($self_url, "(.*)/.*\.ps1", '$1')
-      $sshd_config = "bash <(curl -fsSkL $root_url/sshConfigure.sh)"
+      $sshd_config = "bash <(curl -fsSkL $root_url/sshConfigure.sh) $($options['with-sshd'])"
       "$bash_path --login -c '$sshd_config ssh_install_cmd'" | iex
     }
   
     # Install apt-cyg
-    if (check('apt-cyg')) {
+    if (check('with-apt-cyg')) {
       "$bash_path --login -c '(curl -fsSkL https://apt-cyg.googlecode.com/svn/trunk/apt-cyg) > /bin/apt-cyg && chmod +x /bin/apt-cyg'" | iex
     }
   
@@ -92,7 +92,8 @@ if (-not (check('uninstall'))) {
 } else {
   if (Test-Path $bash_path) {
     "Removing cygwin"
-    "$bash_path --login -c 'cygrunsrv -E sshd && cygrunsrv -R sshd'" | iex
+    "$bash_path --login -c 'cygrunsrv -E sshd'" | iex
+    "$bash_path --login -c 'cygrunsrv -R sshd'" | iex
     "$bash_path --login -c 'chown -R $($env:USERNAME) /var /home'" | iex
     "$bash_path --login -c 'chmod 777 /var /home'" | iex
     Remove-Item -Recurse -Force $options['target_path']
