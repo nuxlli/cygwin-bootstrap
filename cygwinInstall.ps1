@@ -12,8 +12,9 @@ $options    = @{
   "mirror"      = "http://mirror.cs.vt.edu/pub/cygwin/cygwin"
   "uninstall"   = "false";
   "target_path" = "C:\cygwin";
-  "packages"    = "wget";
+  "packages"    = "";
   "sshd"        = "true";
+  "apt-cyg"     = "false";
   "open_bash"   = "false";
 }
 
@@ -21,7 +22,16 @@ foreach($key in $params.AllKeys) {
   $options[$key] = $params[$key]
 }
 
-Function check($option) { $options[$option] -eq "true" }
+# Utils
+function check($option) {
+  $options[$option] -eq "true"
+}
+
+function dependence_for($mod, $dependences) {
+  if (check($mod)) {
+    $options["packages"] = ("$($options["packages"]) $dependences").trim()
+  }
+}
 
 # Bash path
 $bash_path = $(Join-Path "$(Join-Path $($options['target_path']) "bin")" "bash.exe")
@@ -47,24 +57,31 @@ if (-not (check('uninstall'))) {
   $setup_cmd = "$setup_path $([string]::join(" ", $setup_opt))"
   
   # Packs
-  if (check('sshd')) {
-    $options['packages'] = "$($options['packages']) curl openssh"
-  }
-  
+  dependence_for 'sshd' 'curl openssh'
+  dependence_for 'apt-cyg' 'wget'
   $packs = [string]::join(" -P ", "cygwin coreutils $($options['packages'])".split(" "))
 
   "Install cygwin and packages: $($options['packages'])"
   "$setup_cmd -P $packs | out-null" | iex
-
-  #Run ssh install
-  if (check('sshd')) {
-    $self_url  = [System.Net.HttpWebRequest]::Create($short_url).GetResponse().ResponseUri.AbsoluteUri
-    $root_url  = [regex]::Replace($self_url, "(.*)/.*\.ps1", '$1')
-    "$bash_path --login -c '$("bash <(curl -fsSkL $($root_url)/sshConfigure.sh)") ssh_install_cmd'" | iex
-  }
   
-  if (check('open_bash')) {
-    "$bash_path --login -i" | iex
+  if (Test-Path $bash_path) {
+    # Configure sshd
+    if (check('sshd')) {
+      $self_url    = [System.Net.HttpWebRequest]::Create($short_url).GetResponse().ResponseUri.AbsoluteUri
+      $root_url    = [regex]::Replace($self_url, "(.*)/.*\.ps1", '$1')
+      $sshd_config = "bash <(curl -fsSkL $root_url/sshConfigure.sh)"
+      "$bash_path --login -c '$sshd_config ssh_install_cmd'" | iex
+    }
+  
+    # Install apt-cyg
+    if (check('apt-cyg')) {
+      "$bash_path --login -c '(curl -fsSkL https://apt-cyg.googlecode.com/svn/trunk/apt-cyg) > /bin/apt-cyg && chmod +x /bin/apt-cyg'" | iex
+    }
+  
+    # Open bash after install?
+    if (check('open_bash')) { "$bash_path --login -i" | iex }
+  } else {
+    "Install error, cygwin not installed."
   }
 
 # Uninstall

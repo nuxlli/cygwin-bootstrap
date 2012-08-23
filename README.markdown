@@ -13,4 +13,5 @@
   packages     # Extra packages to install
   sshd         # Enable ssh after install? (default: true)
   open_bash    # Opens bash immediately after installation (default: false);
+  apt-cyg      # Install (https://code.google.com/p/apt-cyg/) and dependencies (default: false);
 ```
