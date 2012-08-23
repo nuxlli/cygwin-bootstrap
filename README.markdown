@@ -1,7 +1,11 @@
 # Use #
 
 ```
+  # In powershell
   $options = "open_bash=true&sshd=true"; powershell -NoProfile -ExecutionPolicy unrestricted -Command "(new-object net.webClient).DownloadString('http://bit.ly/psCygwinInstall?$options') | iex"
+  
+  # In bash (inception option, do not ask!)
+  options="sshd=false&target_path=$(cygpath -w $HOME\\cygwin)" powershell -NoProfile -ExecutionPolicy unrestricted -Command "(new-object net.webClient).DownloadString('http://bit.ly/psCygwinInstall?${options}') | iex"
 ```
 
 # Options #
